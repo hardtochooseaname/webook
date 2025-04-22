@@ -1,4 +1,4 @@
-// web包主要进行路由的集中注册
+// web包主要进行路由的集中注册，以及存放业务逻辑handler的具体代码
 // --note--// 另一种选择：分散注册，把路由的注册分散在每个 Handler 那里
 // --note--// 例如 User 相关的注册就与 UserHandler 的定义放在一起
 package web
@@ -28,6 +28,7 @@ func RegisterUserRoutes(server *gin.Engine) *gin.Engine {
 	// 修改
 	ug.POST("/edit", u.Edit)
 
+	// REST 风格（还需要深入了解）
 	// // 注册
 	// server.POST("/users/signup", u.SignUp)
 	// // 登陆
