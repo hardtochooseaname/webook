@@ -50,3 +50,43 @@ func (uh *UserHandler) Edit(ctx *gin.Context) {
 func (uh *UserHandler) Profile(ctx *gin.Context) {
 
 }
+
+// 简单请求测试CORS
+func (uh *UserHandler) ProfileGET(ctx *gin.Context) {
+    user := struct {
+        ID    int    `json:"id"`
+        Email string `json:"email"`
+        Name  string `json:"name"`
+    }{
+        ID:    1,
+        Email: "test@example.com",
+        Name:  "Go 学习者",
+    }
+
+    //  第三步：以 JSON 格式返回给前端
+    ctx.JSON(http.StatusOK, gin.H{
+        "status": "success",
+        "data":   user,
+    })
+}
+
+// 测非简单请求
+func (uh *UserHandler) ProfilePOST(ctx *gin.Context) {
+    // 定义你的请求结构
+    var req struct {
+        Ping string `json:"ping"`
+    }
+
+    // 解析 JSON Body
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 这里你可以根据 req.Ping 做逻辑，比如与数据库交互、校验权限等
+    // 这里只是简单地把它原样返回
+    ctx.JSON(http.StatusOK, gin.H{
+        "status": "pong",
+        "echo":   req.Ping,
+    })
+}

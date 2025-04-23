@@ -1,11 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CORS 预检测试页</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+    }
+
+    button {
+      margin-right: 1em;
+    }
+
+    pre {
+      padding: 1em;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
 <body>
+  <h2>CORS 预检测试</h2>
+  <button id="simple-btn">简单 GET 请求</button>
+  <button id="nonsimple-btn">非简单 POST 请求（JSON）</button>
+  <pre id="output" style="margin-top:1em;"></pre>
+
   <script>
-    fetch('http://localhost:8080/user/profile')
-      .then(r => r.text())
-      .then(console.log)
-      .catch(console.error);
+    const out = document.getElementById('output');
+
+    // 简单 GET，不触发预检
+    document.getElementById('simple-btn').addEventListener('click', () => {
+      out.textContent = '[简单 GET] 请求中…';
+      fetch('http://localhost:8080/user/profile', {
+        method: 'GET',
+        credentials: 'include'
+      })
+        .then(async res => {
+          const text = await res.text();
+          out.textContent =
+            '[简单 GET] 完成\n\n' +
+            `状态：${res.status} ${res.statusText}\n` +
+            `响应头：\n${[...res.headers].map(([k, v]) => k + ': ' + v).join('\n')}\n\n` +
+            `响应体：\n${text}`;
+        })
+        .catch(err => {
+          out.textContent = '[简单 GET] 请求失败：' + err;
+        });
+    });
+
+    // 非简单 POST，会触发 OPTIONS 预检
+    document.getElementById('nonsimple-btn').addEventListener('click', () => {
+      out.textContent = '[非简单 POST] 请求中…';
+      fetch('http://localhost:8080/user/profile', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug': '1'  // 自定义头也会触发预检
+        },
+        body: JSON.stringify({ ping: 'pong' })
+      })
+        .then(async res => {
+          const text = await res.text();
+          out.textContent =
+            '[非简单 POST] 完成\n\n' +
+            `状态：${res.status} ${res.statusText}\n` +
+            `响应头：\n${[...res.headers].map(([k, v]) => k + ': ' + v).join('\n')}\n\n` +
+            `响应体：\n${text}`;
+        })
+        .catch(err => {
+          out.textContent = '[非简单 POST] 请求失败：' + err;
+        });
+    });
   </script>
 </body>
+
 </html>

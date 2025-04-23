@@ -5,7 +5,10 @@ package web
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,6 +35,31 @@ func RegisterRoutes() *gin.Engine {
 		fmt.Println("第22222个middleware测试")
 	})
 
+	// CORS中间件测试
+	server.Use(cors.New(cors.Config{
+		// 下面两行配置服务器允许跨域请求所在的源
+		//   第一行直接列出允许的源
+		//   第二行通过函数来判断 origin 源是否是允许的源
+		// 修改下面两行配置即可复现跨域问题
+		AllowOrigins: []string{"http://localhost:3000", "http://192.168.20.243:3000"},
+		AllowOriginFunc: func(origin string) bool {
+			return strings.HasPrefix(origin, "http://192.168.20.")
+		},
+
+		AllowMethods:  []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		// 预检请求的 access-control-request-headers 字段中说明了跨域请求的需要用到的请求头部字段，需要在这里全部allow
+		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization", "x-debug"},
+		
+		// 可以安全暴露给 API 的头部
+		ExposeHeaders: []string{"Content-Length"},
+		
+		// 这个就是 cookie 之类的凭证信息
+		AllowCredentials: true,
+		
+		// 这个指定的是preflight请求有效的时常（当前设置时12个小时之内进行过预检，再发起跨域请求时就不用再预检了）
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// --note--// 可以对所有的路由进行分组，与 User 相关的路由就放在 UserRegister 中
 	// --note--// 也可以把所有的路由注册全都一股脑放进 RegisterRoutes 中
 	server = RegisterUserRoutes(server)
@@ -52,16 +80,10 @@ func RegisterUserRoutes(server *gin.Engine) *gin.Engine {
 	ug.GET("/sprofile", u.Profile)
 	// 修改
 	ug.POST("/edit", u.Edit)
+	// 供 CORS 测试的路由
+	ug.GET("/profile", u.ProfileGET)
+	ug.POST("/profile", u.ProfilePOST)
 
-	// REST 风格（还需要深入了解）
-	// // 注册
-	// server.POST("/users/signup", u.SignUp)
-	// // 登陆
-	// server.POST("/users/login", u.LogIn)
-	// // 查询
-	// server.GET("/users/sprofile", u.Profile)
-	// // 修改
-	// server.POST("/users/edit", u.Edit)
 
 	return server
 }
