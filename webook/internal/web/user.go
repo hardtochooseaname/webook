@@ -2,11 +2,32 @@ package web
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
+    emailExp *regexp.Regexp
+    passwordExp *regexp.Regexp
+}
+
+func NewUserHandler() *UserHandler {
+    const (
+        emailRegexPattern = `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+        passwordRegexPattern = `^[A-Za-z\d@$!%*?&]{8,}$`
+    )
+
+    // 编译正则表达式
+    emailRegex := regexp.MustCompile(emailRegexPattern)
+    passwordRegex := regexp.MustCompile(passwordRegexPattern)
+
+
+
+    return &UserHandler{
+        emailExp: emailRegex,
+        passwordExp: passwordRegex, 
+    }
 }
 
 
@@ -15,6 +36,9 @@ type UserHandler struct {
 // 2. 调用业务逻辑处理请求
 // 3. 根据业务处理结果返回响应
 func (uh *UserHandler) SignUp(ctx *gin.Context) {
+    //-------------------------------------
+    // 接收用户请求和数据
+    //-------------------------------------
 	// 定义私有结构体
 	// 只希望结构体在函数内部被使用
 	// json格式前后端数据传输常用格式
@@ -34,10 +58,42 @@ func (uh *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 
-	// TODO: 添加请求校验，正则表达式判断邮箱格式是否正确、两次密码是否一致、密码复杂度是否符合要求
-	
-	ctx.String(http.StatusOK, "Hello user %s! You have signed up successfully!", req.Email)
+    //-------------------------------------
+    // 用户数据校验
+    //-------------------------------------
+
+    // 1. 邮箱格式校验
+    if !uh.emailExp.MatchString(req.Email) {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "邮箱格式不正确"})
+        return
+    }
+
+    // 2. 两次密码是否一致
+    if req.Password != req.ConfirmPassword {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "两次输入的密码不一致"})
+        return
+    }
+
+    // 3. 密码格式校验
+    if !uh.passwordExp.MatchString(req.Password) {
+        ctx.JSON(http.StatusBadRequest, gin.H{
+            "error": "密码格式不符合要求（至少8位，仅允许字母、数字和 @$!%*?&）",
+        })
+        return
+    }
+
+    //-------------------------------------
+    // 业务逻辑处理 
+    //-------------------------------------
+
+
+
+    // 最终返回成功
+    ctx.JSON(http.StatusOK, gin.H{
+        "message": "Hello user " + req.Email + "! You have signed up successfully!",
+    })
 }
+    
 
 func (uh *UserHandler) LogIn(ctx *gin.Context) {
 
@@ -51,42 +107,3 @@ func (uh *UserHandler) Profile(ctx *gin.Context) {
 
 }
 
-// 简单请求测试CORS
-func (uh *UserHandler) ProfileGET(ctx *gin.Context) {
-    user := struct {
-        ID    int    `json:"id"`
-        Email string `json:"email"`
-        Name  string `json:"name"`
-    }{
-        ID:    1,
-        Email: "test@example.com",
-        Name:  "Go 学习者",
-    }
-
-    //  第三步：以 JSON 格式返回给前端
-    ctx.JSON(http.StatusOK, gin.H{
-        "status": "success",
-        "data":   user,
-    })
-}
-
-// 测非简单请求
-func (uh *UserHandler) ProfilePOST(ctx *gin.Context) {
-    // 定义你的请求结构
-    var req struct {
-        Ping string `json:"ping"`
-    }
-
-    // 解析 JSON Body
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-
-    // 这里你可以根据 req.Ping 做逻辑，比如与数据库交互、校验权限等
-    // 这里只是简单地把它原样返回
-    ctx.JSON(http.StatusOK, gin.H{
-        "status": "pong",
-        "echo":   req.Ping,
-    })
-}

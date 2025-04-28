@@ -3,10 +3,26 @@
 
 
 # 注册逻辑测试
-curl -X POST "http://localhost:8080/user/signup" \
-     -H "Content-Type: application/json" \
-     -d '{
-           "email": "test@example.com",
-           "password": "123456",
-           "confirmPassword": "123456"
-         }'
+### 1. 注册成功
+curl -X POST http://localhost:8080/user/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "Password123!",
+    "confirmPassword": "Password123!"
+}'
+
+### 2. 注册失败
+# 2.1 密码格式错误
+curl -X POST http://localhost:8080/user/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"123","confirmPassword":"123"}'
+# 2.2 两次密码不一致
+curl -X POST http://localhost:8080/user/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Password123!","confirmPassword":"Password321!"}'
+# 2.3 邮箱格式错误
+curl -X POST http://localhost:8080/user/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"bademail.com","password":"GoodPass123!","confirmPassword":"GoodPass123!"}'
+
