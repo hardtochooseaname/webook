@@ -1,0 +1,20 @@
+version: "3.0"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: webook-mysql
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      # 这是 MySQL root 用户的密码，请根据需要修改
+      MYSQL_ROOT_PASSWORD: root
+      # 可选：如果你希望在启动时自动创建一个非 root 用户和数据库
+      # MYSQL_DATABASE: myapp
+      # MYSQL_USER: user
+      # MYSQL_PASSWORD: user_password
+    volumes:
+      # 挂载初始化脚本目录，容器首次启动时执行
+      - ./script/mysql:/docker-entrypoint-initdb.d
+    ports:
+      - "13306:3306"
