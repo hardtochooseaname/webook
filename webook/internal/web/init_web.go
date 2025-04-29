@@ -7,18 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes() *gin.Engine {
-	server := gin.Default()
-
+func (u *UserHandler)RegisterRoutes(server *gin.Engine){
 	// --note--// 可以对所有的路由进行分组，与 User 相关的路由就放在 UserRegister 中
 	// --note--// 也可以把所有的路由注册全都一股脑放进 RegisterRoutes 中
-	server = RegisterUserRoutes(server)
-	return server
+	RegisterUserRoutes(server, u)
 }
 
-func RegisterUserRoutes(server *gin.Engine) *gin.Engine {
-	u := NewUserHandler()
-
+func RegisterUserRoutes(server *gin.Engine, u *UserHandler){
 	// 路由分组
 	//--note--// 这样每个同组的路由注册时，路径中不用重复写相同的前缀，如这里的 /user
 	ug := server.Group("/user")
@@ -30,6 +25,4 @@ func RegisterUserRoutes(server *gin.Engine) *gin.Engine {
 	ug.GET("/sprofile", u.Profile)
 	// 修改
 	ug.POST("/edit", u.Edit)
-
-	return server
 }
